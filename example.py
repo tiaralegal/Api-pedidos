@@ -21,7 +21,7 @@ def obtener_pedido():
   pedidos = cursor.fetchall()
   print(pedidos)
   if pedidos :
-    json_return = [{'id': pedido[1], 'stock': pedido[2], 'precio':pedido[3], 'descripcion':pedido[4]} for pedido in pedidos]
+    json_return = [{'id': pedido[0], 'stock': pedido[1], 'precio':pedido[2], 'descripcion':pedido[3]} for pedido in pedidos]
     return jsonify(json_return)
   return jsonify({'message': 'Pedido no encontrado'}), 404
 
