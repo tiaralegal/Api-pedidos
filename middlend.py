@@ -8,7 +8,7 @@ CORS(app)
 @app.route('/middlend/menu', methods=['GET'])
 def obtener_menu():
     try:
-        response = requests.get('http://127.0.0.1:5000/menu')
+        response = requests.get('https://apimenu-3.onrender.com/api/menu')
         if response.status_code == 200:
             return jsonify(response.json()), 200
         else:

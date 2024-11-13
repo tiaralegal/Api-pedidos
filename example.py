@@ -18,9 +18,10 @@ mydb = psycopg2.connect(
 def obtener_pedido():
   cursor = mydb.cursor()
   cursor.execute("SELECT * FROM articulos ")
-  pedido = cursor.fetchone()
-  if pedido:
-    return jsonify(pedido)
+  pedidos = cursor.fetchone()
+  if pedidos :
+    json_return = [{'id': pedido[1], 'stock': pedido[2], 'precio':pedido[3], 'descripcion':pedido[4]} for pedido in pedidos]
+    return jsonify(json_return)
   return jsonify({'message': 'Pedido no encontrado'}), 404
 
 @app.route('/pedido', methods=['POST'])
