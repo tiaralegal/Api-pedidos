@@ -18,7 +18,8 @@ mydb = psycopg2.connect(
 def obtener_pedido():
   cursor = mydb.cursor()
   cursor.execute("SELECT * FROM articulos ")
-  pedidos = cursor.fetchone()
+  pedidos = cursor.fetchall()
+  print(pedidos)
   if pedidos :
     json_return = [{'id': pedido[1], 'stock': pedido[2], 'precio':pedido[3], 'descripcion':pedido[4]} for pedido in pedidos]
     return jsonify(json_return)
