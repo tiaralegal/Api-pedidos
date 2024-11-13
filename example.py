@@ -27,53 +27,66 @@ def obtener_pedido():
 
 @app.route('/pedido', methods=['POST'])
 def crear_pedido():
-    # Obtener los datos del pedido desde la solicitud
     data = request.get_json()
-    stock = data.get('stock')
-    precio = data.get('precio')
-    descripcion = data.get('descripcion')
+    fecha = data.get('fecha')
+    estado_id = data.get('Estado_idEstado')
+    detalles = data.get('detalles')  # Lista de detalles [{ "articulos_id": 1, "cantidad": 2, "precio_unitario": 10.5 }, ...]
 
-    # Validación de los datos (opcional)
-    if not stock or not precio or not descripcion:
+    if not fecha or not estado_id or not detalles:
         return jsonify({'message': 'Datos incompletos'}), 400
 
     cursor = mydb.cursor()
-    # Insertar el pedido en la base de datos
-    cursor.execute("INSERT INTO articulos (stock, precio, descripcion) VALUES (%s, %s, %s)", (stock, precio, descripcion))
+    # Insertar en la tabla pedido
+    cursor.execute("INSERT INTO pedido (fecha, Estado_idEstado) VALUES (%s, %s) RETURNING idPedido", (fecha, estado_id))
+    pedido_id = cursor.fetchone()[0]
+
+    # Insertar en la tabla pedido_detalle para cada artículo
+    for detalle in detalles:
+        cursor.execute(
+            "INSERT INTO pedido_detalle (articulos_idarticulos, Pedido_idPedido, cantidad, precio_unitario) VALUES (%s, %s, %s, %s)",
+            (detalle['articulos_id'], pedido_id, detalle['cantidad'], detalle['precio_unitario'])
+        )
+  
     mydb.commit()
-    return jsonify({'message': 'Pedido creado'}), 201
+    return jsonify({'message': 'Pedido creado', 'pedido_id': pedido_id}), 201
 
 
 @app.route('/pedido/<int:id>', methods=['PUT'])
 def actualizar_pedido(id):
-    # Obtener los datos del pedido desde la solicitud
     data = request.get_json()
-    stock = data.get('stock')
-    precio = data.get('precio')
-    descripcion = data.get('descripcion')
-
-    # Validación de los datos (opcional)
-    if stock is None or precio is None or descripcion is None:
-        return jsonify({'message': 'Datos incompletos'}), 400
+    fecha = data.get('fecha')
+    estado_id = data.get('Estado_idEstado')
+    detalles = data.get('detalles')
 
     cursor = mydb.cursor()
-    # Actualizar el pedido en la base de datos
-    cursor.execute(
-        "UPDATE articulos SET stock = %s, precio = %s, descripcion = %s WHERE id = %s",
-        (stock, precio, descripcion, id)
-    )
+    # Actualizar la tabla pedido
+    cursor.execute("UPDATE pedido SET fecha = %s, Estado_idEstado = %s WHERE idPedido = %s", (fecha, estado_id, id))
+
+    # Actualizar detalles del pedido (borramos y volvemos a insertar para simplificar)
+    cursor.execute("DELETE FROM pedido_detalle WHERE Pedido_idPedido = %s", (id,))
+    for detalle in detalles:
+        cursor.execute(
+            "INSERT INTO pedido_detalle (articulos_idarticulos, Pedido_idPedido, cantidad, precio_unitario) VALUES (%s, %s, %s, %s)",
+            (detalle['articulos_id'], id, detalle['cantidad'], detalle['precio_unitario'])
+        )
+  
     mydb.commit()
     return jsonify({'message': 'Pedido actualizado'})
 
 
 
-@app.route('/pedido', methods=['DELETE'])
+@app.route('/pedido/<int:id>', methods=['DELETE'])
 def eliminar_pedido(id):
-  cursor = mydb.cursor()
-  # Eliminar el pedido de la base de datos
-  # ...
-  mydb.commit()
-  return jsonify({'message': 'Pedido eliminado'})
+    cursor = mydb.cursor()
+    # Eliminar detalles asociados al pedido
+    cursor.execute("DELETE FROM pedido_detalle WHERE Pedido_idPedido = %s", (id,))
+    # Eliminar el pedido en sí
+    cursor.execute("DELETE FROM pedido WHERE idPedido = %s", (id,))
+  
+    mydb.commit()
+    return jsonify({'message': 'Pedido eliminado'})
+
+
 
 if __name__ == '__main__':
   app.run(host='0.0.0.0', port=5000, debug=True)
