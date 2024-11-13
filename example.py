@@ -44,15 +44,28 @@ def crear_pedido():
     return jsonify({'message': 'Pedido creado'}), 201
 
 
-@app.route('/pedido', methods=['PUT'])
+@app.route('/pedido/<int:id>', methods=['PUT'])
 def actualizar_pedido(id):
-  # Obtener los datos del pedido desde la solicitud
-  # ...
-  cursor = mydb.cursor()
-  # Actualizar el pedido en la base de datos
-  # ...
-  mydb.commit()
-  return jsonify({'message': 'Pedido actualizado'})
+    # Obtener los datos del pedido desde la solicitud
+    data = request.get_json()
+    stock = data.get('stock')
+    precio = data.get('precio')
+    descripcion = data.get('descripcion')
+
+    # Validación de los datos (opcional)
+    if stock is None or precio is None or descripcion is None:
+        return jsonify({'message': 'Datos incompletos'}), 400
+
+    cursor = mydb.cursor()
+    # Actualizar el pedido en la base de datos
+    cursor.execute(
+        "UPDATE articulos SET stock = %s, precio = %s, descripcion = %s WHERE id = %s",
+        (stock, precio, descripcion, id)
+    )
+    mydb.commit()
+    return jsonify({'message': 'Pedido actualizado'})
+
+
 
 @app.route('/pedido', methods=['DELETE'])
 def eliminar_pedido(id):
