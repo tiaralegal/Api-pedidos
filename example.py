@@ -27,13 +27,22 @@ def obtener_pedido():
 
 @app.route('/pedido', methods=['POST'])
 def crear_pedido():
-  # Obtener los datos del pedido desde la solicitud
-  # ...
-  cursor = mydb.cursor()
-  # Insertar el pedido en la base de datos
-  # ...
-  mydb.commit()
-  return jsonify({'message': 'Pedido creado'}), 201
+    # Obtener los datos del pedido desde la solicitud
+    data = request.get_json()
+    stock = data.get('stock')
+    precio = data.get('precio')
+    descripcion = data.get('descripcion')
+
+    # Validación de los datos (opcional)
+    if not stock or not precio or not descripcion:
+        return jsonify({'message': 'Datos incompletos'}), 400
+
+    cursor = mydb.cursor()
+    # Insertar el pedido en la base de datos
+    cursor.execute("INSERT INTO articulos (stock, precio, descripcion) VALUES (%s, %s, %s)", (stock, precio, descripcion))
+    mydb.commit()
+    return jsonify({'message': 'Pedido creado'}), 201
+
 
 @app.route('/pedido', methods=['PUT'])
 def actualizar_pedido(id):
