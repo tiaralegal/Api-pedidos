@@ -13,8 +13,8 @@ mydb = psycopg2.connect(
   database="pedidos_db_wdti"
 )
 
-@app.route('/pedido/<int:id>', methods=['GET'])
-def obtener_pedido(id):
+@app.route('/pedido', methods=['GET'])
+def obtener_pedido():
     cursor = mydb.cursor()
     cursor.execute("SELECT * FROM pedido WHERE idPedido = %s", (id,))
     pedido = cursor.fetchone()
