@@ -14,7 +14,7 @@ mydb = psycopg2.connect(
 )
 
 @app.route('/pedido', methods=['GET'])
-def obtener_pedido():
+def obtener_pedido(id):
     cursor = mydb.cursor()
     cursor.execute("SELECT * FROM pedido WHERE idPedido = %s", (id,))
     pedido = cursor.fetchone()
