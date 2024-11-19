@@ -14,36 +14,46 @@ mydb = psycopg2.connect(
 )
 
 @app.route('/pedido', methods=['GET'])
-def obtener_pedido():
+def obtener_pedidos():
     cursor = mydb.cursor()
-    cursor.execute("SELECT * FROM pedido WHERE idPedido = %s", (1,))
-    pedido = cursor.fetchone()
+    # Obtener todos los pedidos
+    cursor.execute("SELECT * FROM pedido")
+    pedidos = cursor.fetchall()
 
-    if not pedido:
-        print(f"No se encontró el pedido con id {1}")
-        return jsonify({'message': 'Pedido no encontrado'}), 404
+    if not pedidos:
+        print("No se encontraron pedidos en la base de datos")
+        return jsonify({'message': 'No se encontraron pedidos'}), 404
 
-    # Obtener los detalles del pedido
-    cursor.execute("""
-        SELECT pd.articulos_idarticulos, a.descripcion, pd.cantidad, pd.precio_unitario
-        FROM pedido_detalle pd
-        JOIN articulos a ON pd.articulos_idarticulos = a.idarticulos
-        WHERE pd.Pedido_idPedido = %s
-    """, (1,))
-    detalles = cursor.fetchall()
+    # Lista para almacenar todos los pedidos con sus detalles
+    pedidos_data = []
 
-    # Mostrar los datos del pedido en la consola
-    print(f"Pedido: {pedido}")
-    print(f"Detalles del Pedido: {detalles}")
+    for pedido in pedidos:
+        pedido_id = pedido[0]
+        # Obtener los detalles de cada pedido
+        cursor.execute("""
+            SELECT pd.articulos_idarticulos, a.descripcion, pd.cantidad, pd.precio_unitario
+            FROM pedido_detalle pd
+            JOIN articulos a ON pd.articulos_idarticulos = a.idarticulos
+            WHERE pd.Pedido_idPedido = %s
+        """, (pedido_id,))
+        detalles = cursor.fetchall()
 
-    # Formatear los datos para la respuesta JSON
-    pedido_data = {
-        'idPedido': pedido[0],
-        'fecha': pedido[1],
-        'Estado_idEstado': pedido[2],
-        'detalles': [{'articulos_id': d[0], 'descripcion': d[1], 'cantidad': d[2], 'precio_unitario': d[3]} for d in detalles]
-    }
-    return jsonify(pedido_data)
+        # Imprimir el pedido y sus detalles
+        print(f"Pedido: {pedido}")
+        print(f"Detalles del Pedido: {detalles}")
+
+        # Formatear los datos del pedido
+        pedido_data = {
+            'idPedido': pedido[0],
+            'fecha': pedido[1],
+            'Estado_idEstado': pedido[2],
+            'detalles': [{'articulos_id': d[0], 'descripcion': d[1], 'cantidad': d[2], 'precio_unitario': d[3]} for d in detalles]
+        }
+        pedidos_data.append(pedido_data)
+
+    # Retornar la lista de pedidos como JSON
+    return jsonify(pedidos_data)
+
 
 
 
