@@ -20,8 +20,10 @@ def obtener_pedido(id):
     pedido = cursor.fetchone()
 
     if not pedido:
+        print(f"No se encontró el pedido con id {id}")
         return jsonify({'message': 'Pedido no encontrado'}), 404
 
+    # Obtener los detalles del pedido
     cursor.execute("""
         SELECT pd.articulos_idarticulos, a.descripcion, pd.cantidad, pd.precio_unitario
         FROM pedido_detalle pd
@@ -30,6 +32,11 @@ def obtener_pedido(id):
     """, (id,))
     detalles = cursor.fetchall()
 
+    # Mostrar los datos del pedido en la consola
+    print(f"Pedido: {pedido}")
+    print(f"Detalles del Pedido: {detalles}")
+
+    # Formatear los datos para la respuesta JSON
     pedido_data = {
         'idPedido': pedido[0],
         'fecha': pedido[1],
@@ -37,6 +44,7 @@ def obtener_pedido(id):
         'detalles': [{'articulos_id': d[0], 'descripcion': d[1], 'cantidad': d[2], 'precio_unitario': d[3]} for d in detalles]
     }
     return jsonify(pedido_data)
+
 
 
 @app.route('/pedido', methods=['POST'])
