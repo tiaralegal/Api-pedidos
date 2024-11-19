@@ -13,17 +13,31 @@ mydb = psycopg2.connect(
   database="pedidos_db_wdti"
 )
 
+@app.route('/pedido/<int:id>', methods=['GET'])
+def obtener_pedido(id):
+    cursor = mydb.cursor()
+    cursor.execute("SELECT * FROM pedido WHERE idPedido = %s", (id,))
+    pedido = cursor.fetchone()
 
-@app.route('/pedido', methods=['GET'])
-def obtener_pedido():
-  cursor = mydb.cursor()
-  cursor.execute("SELECT * FROM articulos ")
-  pedidos = cursor.fetchall()
-  print(pedidos)
-  if pedidos :
-    json_return = [{'id': pedido[0], 'stock': pedido[1], 'precio':pedido[2], 'descripcion':pedido[3]} for pedido in pedidos]
-    return jsonify(json_return)
-  return jsonify({'message': 'Pedido no encontrado'}), 404
+    if not pedido:
+        return jsonify({'message': 'Pedido no encontrado'}), 404
+
+    cursor.execute("""
+        SELECT pd.articulos_idarticulos, a.descripcion, pd.cantidad, pd.precio_unitario
+        FROM pedido_detalle pd
+        JOIN articulos a ON pd.articulos_idarticulos = a.idarticulos
+        WHERE pd.Pedido_idPedido = %s
+    """, (id,))
+    detalles = cursor.fetchall()
+
+    pedido_data = {
+        'idPedido': pedido[0],
+        'fecha': pedido[1],
+        'Estado_idEstado': pedido[2],
+        'detalles': [{'articulos_id': d[0], 'descripcion': d[1], 'cantidad': d[2], 'precio_unitario': d[3]} for d in detalles]
+    }
+    return jsonify(pedido_data)
+
 
 @app.route('/pedido', methods=['POST'])
 def crear_pedido():
@@ -62,7 +76,7 @@ def actualizar_pedido(id):
     # Actualizar la tabla pedido
     cursor.execute("UPDATE pedido SET fecha = %s, Estado_idEstado = %s WHERE idPedido = %s", (fecha, estado_id, id))
 
-    # Actualizar detalles del pedido (borramos y volvemos a insertar para simplificar)
+    # Actualizar detalles del pedido (borramos y volvemos a insertar)
     cursor.execute("DELETE FROM pedido_detalle WHERE Pedido_idPedido = %s", (id,))
     for detalle in detalles:
         cursor.execute(
