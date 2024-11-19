@@ -20,7 +20,7 @@ def obtener_pedido():
     pedido = cursor.fetchone()
 
     if not pedido:
-        print(f"No se encontró el pedido con id {id}")
+        print(f"No se encontró el pedido con id {1}")
         return jsonify({'message': 'Pedido no encontrado'}), 404
 
     # Obtener los detalles del pedido
@@ -29,7 +29,7 @@ def obtener_pedido():
         FROM pedido_detalle pd
         JOIN articulos a ON pd.articulos_idarticulos = a.idarticulos
         WHERE pd.Pedido_idPedido = %s
-    """, (id,))
+    """, (1,))
     detalles = cursor.fetchall()
 
     # Mostrar los datos del pedido en la consola
